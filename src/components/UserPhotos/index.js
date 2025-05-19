@@ -1,4 +1,4 @@
-import React from "react";
+import { useState, useEffect } from "react";
 import {
   Typography,
   Card,
@@ -9,21 +9,53 @@ import {
 import { useParams, Link } from "react-router-dom";
 
 import "./styles.css";
-import models from "../../modelData/models";
 
-/**
- * Define UserPhotos, a React component of Project 4.
- */
+
 function UserPhotos() {
   const { userId } = useParams();
-  const photos = models.photoOfUserModel(userId);
-  const user = models.userModel(userId);
-  console.log(photos);
+  const [photos, setPhotos] = useState([]);
+  const [user, setUser] = useState(null);
+
+  // lấy toàn bộ ảnh theo id người dùng
+  useEffect(() => {
+    const fetchPhotos = async () => {
+      try {
+        const res = await fetch(
+          `https://ldk3f3-8081.csb.app/api/photo/photosOfUser/${userId}`
+        );
+        const data = await res.json();
+        console.log(data.photos);
+        setPhotos(data.photos);
+      } catch (e) {
+        console.log("Lỗi khi fetch ảnh: ", e);
+      }
+    };
+    fetchPhotos();
+  }, [userId]);
+
+  // Lấy người dùng
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch(
+          `https://ldk3f3-8081.csb.app/api/user/${userId}`
+        );
+        const data = await res.json();
+        setUser(data.user);
+      } catch (e) {
+        console.log("Lỗi khi fetch người dùng: ", e);
+      }
+    };
+    fetchUser();
+  }, [userId]);
+
+  // Nếu chưa có thông tin người dùng, không render gì
+  if (!user) return null;
 
   return (
     <div>
       <Typography variant="h5" gutterBottom>
-        Ảnh của người dùng: {user.first_name} {user.last_name}
+        Ảnh của người dùng: {user.last_name}
       </Typography>
 
       {photos.map((photo) => (
@@ -46,17 +78,22 @@ function UserPhotos() {
 
             {photo.comments && photo.comments.length > 0 ? (
               photo.comments.map((comment, index) => {
+                const commenter = comment.user_id || {}; // Nếu không có thông tin người dùng, để mặc định là {}
                 return (
                   <div key={index} style={{ marginBottom: "12px" }}>
                     <Typography variant="body2" color="text.secondary">
                       {new Date(comment.date_time).toLocaleString()}
                     </Typography>
                     <Typography variant="body1">
-                      Người bình luận:{" "}
-                      <Link to={`/users/${comment.user._id}`}>
-                        {models.userModel(comment.user._id).first_name}{" "}
-                        {models.userModel(comment.user._id).last_name}
+                      Người bình luận:{ commenter.last_name ? (
+                        <Link to={`/users/${commenter._id}`} style={{ textDecoration: "none" }}>
+                        <span style={{ color: "black", fontWeight: "bold" }}>
+                          {commenter.last_name}
+                        </span>
                       </Link>
+                      ) : (
+                        "Người dùng không xác định"
+                      )}
                     </Typography>
                     <Typography variant="body2">{comment.comment}</Typography>
                     <Divider style={{ marginTop: "10px" }} />

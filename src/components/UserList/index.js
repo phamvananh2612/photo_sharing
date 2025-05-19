@@ -1,4 +1,4 @@
-import React from "react";
+import { useState, useEffect } from "react";
 import {
   Divider,
   List,
@@ -15,24 +15,42 @@ import models from "../../modelData/models";
  * Define UserList, a React component of Project 4.
  */
 function UserList() {
-  const users = models.userListModel();
+  const [users, setUsers] = useState([]);
+  useEffect(() => {
+    const fetchApi = async () => {
+      try {
+        const res = await fetch(`https://ldk3f3-8081.csb.app/api/user/list`);
+        const data = await res.json();
+        setUsers(data.users);
+      } catch (e) {
+        console.log("lỗi khi fetchApi: ", e);
+      }
+    };
+    fetchApi();
+  }, []);
+
+  console.log(users);
 
   return (
-    <div>
+    <>
       <Typography variant="h6" gutterBottom>
         Danh sách người dùng
       </Typography>
       <List component="nav">
         {users.map((item) => (
-          <React.Fragment key={item._id}>
-            <ListItem button component={Link} to={`/users/${item._id}`}>
-              <ListItemText primary={`${item.first_name} ${item.last_name}`} />
+          <div key={item._id} className="item-user">
+            <ListItem
+              className="item-user"
+              component={Link}
+              to={`/users/${item._id}`}
+            >
+              <ListItemText primary={`${item.last_name}`} />
             </ListItem>
             <Divider />
-          </React.Fragment>
+          </div>
         ))}
       </List>
-    </div>
+    </>
   );
 }
 
